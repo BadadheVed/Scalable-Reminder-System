@@ -4,8 +4,9 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/ioredis": "^5.0.0"
+
+    "@types/ioredis": "^5.0.0",
+    "bun-types": "^1.2.21"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -34,7 +35,7 @@
   },
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec bun run src/index.ts",
-    "build": "tsc && npm run build:post",
+    "build": "tsc && bun run build:post",
     "build:post": "echo 'Build completed successfully'",
     "start": "bun run dist/index.js",
     "clean": "rm -rf dist"
