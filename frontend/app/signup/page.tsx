@@ -18,9 +18,8 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Bell, Mail, Lock, Eye, EyeOff, User } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-// Adjust path as needed
+import { axiosInstance } from "@/axios/axios"; // Adjust path as needed
 
 const signupSchema = z
   .object({
@@ -53,23 +52,46 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
   });
 
-  const { signup } = useAuth();
-
   const onSubmit = async (data: SignupForm) => {
-    setIsLoading(true);
-    setError(null);
-
     try {
-      await signup(data.email, data.password, data.name);
-      reset();
+      setIsLoading(true);
+      setError(null);
+
+      // Prepare the request body (excluding confirmPassword)
+      const requestBody = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      };
+
+      const response = await axiosInstance.post("/auth/signup", requestBody);
+
+      if (response.data.success) {
+        toast.success("Account created successfully!", {
+          description: `Welcome ${response.data.name}! Please sign in to continue.`,
+        });
+
+        // Reset form
+        reset();
+
+        // Redirect to login page
+        router.push("/login");
+      }
     } catch (error: any) {
       console.error("Signup error:", error);
 
-      const errorMessage =
-        error.response?.data?.message ||
-        "Account creation failed. Please try again.";
+      let errorMessage = "Something went wrong. Please try again.";
+
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
 
       setError(errorMessage);
+      toast.error("Signup failed", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
