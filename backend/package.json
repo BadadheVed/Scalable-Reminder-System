@@ -34,7 +34,9 @@
   },
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec bun run src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build": "tsc && npm run build:post",
+    "build:post": "echo 'Build completed successfully'",
+    "start": "bun run dist/index.js",
+    "clean": "rm -rf dist"
   }
 }
