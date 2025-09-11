@@ -9,7 +9,7 @@ import cors from "cors";
 
 dotenv.config();
 const app = express();
-const url = process.env.FRONTEND_URL || "http://localhost:8000";
+const url = process.env.FRONTEND_URL || "http://localhost:3000";
 console.log("Allowed CORS origin:", url);
 app.use(
   cors({

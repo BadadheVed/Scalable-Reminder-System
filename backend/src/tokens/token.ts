@@ -20,10 +20,26 @@ export const generateToken = async (payload: TokenPayload) => {
 
 export const verifyToken = (token: string): TokenPayload => {
   try {
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined in environment variables");
+    }
+    
+    if (!token) {
+      throw new Error("Token is required");
+    }
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
     return decoded as TokenPayload; // ✅ return the payload
-  } catch (error) {
-    throw new Error("Error Verifying Token");
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError') {
+      throw new Error("Invalid token");
+    } else if (error.name === 'TokenExpiredError') {
+      throw new Error("Token has expired");
+    } else if (error.name === 'NotBeforeError') {
+      throw new Error("Token not active");
+    } else {
+      throw new Error(`Token verification failed: ${error.message}`);
+    }
   }
 };
 export const cookieOptions = {
