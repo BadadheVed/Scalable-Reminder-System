@@ -40,7 +40,7 @@ const worker = new Worker(
     }
   },
   {
-    connection: { host: "localhost", port: 6379 },
+    connection: { url: process.env.REDIS_URL as string },
   }
 );
 

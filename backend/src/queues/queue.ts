@@ -1,8 +1,7 @@
 import { Queue } from "bullmq";
 const reminderQueue = new Queue("reminders", {
   connection: {
-    host: "localhost",
-    port: 6379,
+    url: process.env.REDIS_URL as string,
   },
 });
 
