@@ -42,33 +42,56 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false); // Start as false since we don't check auth on mount
+  const [loading, setLoading] = useState(true); // Start as true for initial auth check
   const [error, setError] = useState<string | null>(null);
+  const [previousEmail, setPreviousEmail] = useState<string | null>(null);
   const router = useRouter();
 
-  // Don't check auth on mount - only after login
-  // useEffect(() => {
-  //   checkAuth();
-  // }, []);
+  // Check auth on mount - initial load
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  // Watch for email changes and refetch user data
+  useEffect(() => {
+    if (user && user.email !== previousEmail && previousEmail !== null) {
+      console.log("Email changed detected, refetching user data");
+      checkAuth();
+    }
+  }, [user?.email, previousEmail]);
 
   const checkAuth = async () => {
     try {
       setLoading(true);
       setError(null);
+      console.log("Fetching user data from /auth/me");
 
       // Use your /auth/me endpoint
       const response = await axiosInstance.get("/auth/me");
 
       if (response.data.success && response.data.user) {
-        setUser(response.data.user);
+        const userData = response.data.user;
+        setUser(userData);
+        setPreviousEmail(userData.email);
+        console.log("User data fetched successfully:", userData);
       } else {
         setUser(null);
+        setPreviousEmail(null);
         setError(response.data.message || "Failed to fetch user");
+        console.log("No user data received or unsuccessful response");
       }
     } catch (error: any) {
       // If profile check fails, user is not authenticated
       setUser(null);
-      setError(error.response?.data?.message || "Authentication check failed");
+      setPreviousEmail(null);
+
+      // Only set error if it's not a 401 (unauthorized) - that's normal for logged out users
+      if (error.response?.status !== 401) {
+        setError(
+          error.response?.data?.message || "Authentication check failed"
+        );
+      }
+
       console.error("Auth check error:", error);
     } finally {
       setLoading(false);
@@ -82,11 +105,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Function to update user data locally
   const updateUser = (userData: Partial<User>) => {
-    setUser((prevUser) => (prevUser ? { ...prevUser, ...userData } : null));
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+
+      // If email changed, update previousEmail to trigger refetch
+      if (userData.email && userData.email !== previousEmail) {
+        console.log("Email changed via updateUser, will trigger refetch");
+        setPreviousEmail(userData.email);
+      }
+    }
   };
 
   const login = async (email: string, password: string) => {
     try {
+      setLoading(true);
       const response = await axiosInstance.post("/auth/login", {
         email,
         password,
@@ -107,11 +140,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         error.response?.data?.message || "Login failed. Please try again.";
       toast.error(errorMessage);
       throw error; // Re-throw to let the component handle it
+    } finally {
+      setLoading(false);
     }
   };
 
   const signup = async (name: string, email: string, password: string) => {
     try {
+      setLoading(true);
       const response = await axiosInstance.post("/auth/signup", {
         email,
         password,
@@ -132,6 +168,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         "Account creation failed. Please try again.";
       toast.error(errorMessage);
       throw error; // Re-throw to let the component handle it
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -147,6 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
     } finally {
       setUser(null);
+      setPreviousEmail(null);
       setError(null);
       router.push("/login");
     }

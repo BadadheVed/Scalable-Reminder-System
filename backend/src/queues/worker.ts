@@ -2,6 +2,8 @@ import { SendMail } from "@/test/mail";
 import { Worker } from "bullmq";
 import { db } from "@/db/route";
 
+console.log("Starting worker with Redis URL:", process.env.REDIS_URL);
+
 const worker = new Worker(
   "reminders",
   async (job) => {
@@ -43,6 +45,19 @@ const worker = new Worker(
     connection: { url: process.env.REDIS_URL as string },
   }
 );
+
+// Add worker event listeners for debugging
+worker.on('ready', () => {
+  console.log('Worker is ready and listening for jobs');
+});
+
+worker.on('error', (error) => {
+  console.error('Worker error:', error);
+});
+
+worker.on('failed', (job, err) => {
+  console.error(`Worker job ${job?.id} failed:`, err);
+});
 
 worker.on("completed", (job) => {
   console.log(`🎉 Job ${job.id} completed`);

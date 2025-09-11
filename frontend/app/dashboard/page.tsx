@@ -67,14 +67,17 @@ export default function DashboardPage() {
     >
   ) => {
     try {
+      console.log("Creating reminder with data:", data);
       await createReminder({
         title: data.title,
         time: data.startTime,
         description: data.description,
       });
+      console.log("Reminder created successfully, closing form");
       setShowCreateForm(false);
-      fetchReminders();
+      // Don't need to call fetchReminders() as createReminder already updates the state
     } catch (error: any) {
+      console.error("Error creating reminder:", error);
       toast.error(error?.message || "Failed to create reminder block");
     }
   };
@@ -99,9 +102,7 @@ export default function DashboardPage() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Hello, {user?.name?.split(" ")[0] || "Student"} 👋
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-muted-foreground mt-1">
               Ready to tackle your study sessions today?
             </p>

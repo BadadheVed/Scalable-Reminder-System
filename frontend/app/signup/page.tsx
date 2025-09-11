@@ -71,9 +71,6 @@ export default function SignupPage() {
           description: `Welcome ${response.data.name}! Please sign in to continue.`,
         });
 
-        // Reset form
-        reset();
-
         // Redirect to login page
         router.push("/login");
       }

@@ -95,6 +95,7 @@ export const login: RequestHandler = async (
       name: userName,
       token: token,
     });
+    console.log("response set successfully");
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
@@ -206,22 +207,22 @@ export const User = async (req: Request, res: Response) => {
     console.log("User endpoint called");
     console.log("Request cookies:", req.cookies);
     console.log("Request headers:", req.headers);
-    
+
     const token = req.cookies?.token;
     console.log("Token from cookies:", token);
-    
+
     // Check if token exists
     if (!token) {
       console.log("No token found in cookies");
-      return res.status(401).json({ 
-        success: false, 
-        message: "No authentication token provided" 
+      return res.status(401).json({
+        success: false,
+        message: "No authentication token provided",
       });
     }
-    
+
     const decoded = verifyToken(token);
     console.log("Token decoded successfully:", decoded);
-    
+
     const user = await db.user.findFirst({
       where: {
         id: decoded.id,

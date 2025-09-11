@@ -1,40 +1,92 @@
-'use client';
+"use client";
 
-import { ReactNode, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Bell, LogOut, Menu, Settings, User } from 'lucide-react';
+import { ReactNode, useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Bell, LogOut, Menu, Settings, User, Loader2 } from "lucide-react";
+import { axiosInstance } from "@/axios/axios";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { user, logout } = useAuth();
+  const { logout, loading } = useAuth(); // Get user, logout function, and loading state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState("");
+  const [email, setEmail] = useState("");
+  const [userLoading, setUserLoading] = useState(true);
+
+  const getUser = async () => {
+    try {
+      setUserLoading(true);
+      const res = await axiosInstance.get("/auth/me");
+      if (res.data.success && res.data.user) {
+        setUser(res.data.user.name);
+        setEmail(res.data.user.email);
+        console.log("User data fetched successfully:", res.data.user);
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      setUser("");
+      setEmail("");
+    } finally {
+      setUserLoading(false);
+    }
+  };
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    getUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   const getInitials = (name?: string, email?: string) => {
     if (name) {
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+      return name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
     }
-    return email?.charAt(0).toUpperCase() || 'U';
+    return email?.charAt(0).toUpperCase() || "U";
   };
 
   const getFirstName = (name?: string, email?: string) => {
     if (name && name.trim().length > 0) {
-      return name.split(' ')[0];
+      return name.split(" ")[0];
     }
-    return email ? email.split('@')[0] : 'User';
+    return email ? email.split("@")[0] : "User";
   };
+
+  // Show loading state while checking authentication or fetching user data
+  if (loading || userLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -69,44 +121,57 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <div className="bg-primary rounded-lg p-2 mr-3">
                   <Bell className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xl font-bold text-gray-900">Study Reminder</span>
+                <span className="text-xl font-bold text-gray-900">
+                  Study Reminder
+                </span>
               </div>
             </div>
 
-            {/* User Menu */}
+            {/* User Section */}
             <div className="flex items-center space-x-4">
+              {/* User Greeting */}
+              <div className="hidden sm:block">
+                <span className="text-gray-700 font-medium">
+                  Hi {getFirstName(user, email)}!
+                </span>
+              </div>
+
+              {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                  >
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-white">
-                        {getInitials(user?.name, user?.email)}
+                      <AvatarFallback>
+                        {getInitials(user, email)}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{getFirstName(user?.name, user?.email)}</p>
-                      <p className="w-[200px] truncate text-sm text-muted-foreground">
-                        {user?.email}
-                      </p>
-                    </div>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex flex-col space-y-1 p-2">
+                    <p className="text-sm font-medium leading-none">
+                      {user || "User"}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {email || "No email"}
+                    </p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
-                    Profile
+                    <span>Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                    <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                  <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
+                    <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

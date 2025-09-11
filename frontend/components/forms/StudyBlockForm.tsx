@@ -84,6 +84,7 @@ export const StudyBlockForm = ({
   const selectedDuration = watch("duration");
 
   const handleFormSubmit = async (data: StudyBlockFormData) => {
+    console.log("StudyBlockForm handleFormSubmit called with data:", data);
     setIsLoading(true);
     try {
       const startTime = new Date(data.startTime);
@@ -93,12 +94,21 @@ export const StudyBlockForm = ({
       if (!initialData) {
         const minStartTime = addMinutes(now, 10);
         if (startTime < minStartTime) {
+          console.log("Time validation failed, returning early");
           toast.error(
             "Study sessions must be scheduled at least 10 minutes in advance"
           );
           return;
         }
       }
+
+      console.log("Calling onSubmit with data:", {
+        title: data.title,
+        description: data.description || "",
+        startTime: startTime,
+        duration: data.duration,
+        emailReminderSent: false,
+      });
 
       await onSubmit({
         title: data.title,
@@ -108,14 +118,17 @@ export const StudyBlockForm = ({
         emailReminderSent: false,
       });
 
+      console.log("onSubmit completed successfully");
       toast.success(
         initialData
           ? "Study block updated successfully!"
           : "Study block created successfully!"
       );
     } catch (error: any) {
+      console.error("Error in handleFormSubmit:", error);
       toast.error(error.message || "Failed to save study block");
     } finally {
+      console.log("Setting loading to false");
       setIsLoading(false);
     }
   };

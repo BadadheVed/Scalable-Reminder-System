@@ -71,19 +71,31 @@ export const useReminders = (): UseRemindersReturn => {
   const createReminder = useCallback(async (data: CreateReminderData) => {
     setError(null);
     try {
+      console.log("Sending reminder creation request:", {
+        title: data.title,
+        time: data.time.toISOString(),
+        description: data.description,
+      });
+      
       const res = await axiosInstance.post("/reminder/create", {
         title: data.title,
         time: data.time.toISOString(),
         description: data.description,
       });
+      
+      console.log("Reminder creation response:", res.data);
+      
       const payload = res.data;
       if (payload?.success) {
         const newReminder = normalizeReminder(payload.reminder);
+        console.log("Adding new reminder to state:", newReminder);
         setReminders((prev) => [...prev, newReminder]);
+        console.log("Reminder added successfully");
       } else {
         throw new Error(payload?.message || "Failed to create reminder");
       }
     } catch (err: any) {
+      console.error("Error in createReminder:", err);
       const status = err?.response?.status;
       const msg =
         err?.response?.data?.message ||
