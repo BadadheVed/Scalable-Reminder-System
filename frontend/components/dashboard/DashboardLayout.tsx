@@ -29,6 +29,13 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return email?.charAt(0).toUpperCase() || 'U';
   };
 
+  const getFirstName = (name?: string, email?: string) => {
+    if (name && name.trim().length > 0) {
+      return name.split(' ')[0];
+    }
+    return email ? email.split('@')[0] : 'User';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -81,7 +88,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <DropdownMenuContent className="w-56" align="end">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user?.name || 'User'}</p>
+                      <p className="font-medium">{getFirstName(user?.name, user?.email)}</p>
                       <p className="w-[200px] truncate text-sm text-muted-foreground">
                         {user?.email}
                       </p>

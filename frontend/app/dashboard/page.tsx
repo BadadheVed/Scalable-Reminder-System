@@ -100,7 +100,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, {user?.name || "Student"}! 👋
+              Hello, {user?.name?.split(" ")[0] || "Student"} 👋
             </h1>
             <p className="text-muted-foreground mt-1">
               Ready to tackle your study sessions today?

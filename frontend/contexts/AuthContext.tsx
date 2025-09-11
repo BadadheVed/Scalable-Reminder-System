@@ -21,10 +21,13 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
+  refetchUser: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -40,6 +43,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   // Check if user is authenticated on mount
@@ -49,21 +53,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuth = async () => {
     try {
-      // Try to get user profile - you'll need to implement this endpoint
-      // or check if there's a valid token cookie
-      const response = await axiosInstance.get("/api/user/profile");
+      setLoading(true);
+      setError(null);
+
+      // Use your /auth/me endpoint
+      const response = await axiosInstance.get("/auth/me");
 
       if (response.data.success && response.data.user) {
         setUser(response.data.user);
       } else {
         setUser(null);
+        setError(response.data.message || "Failed to fetch user");
       }
-    } catch (error) {
+    } catch (error: any) {
       // If profile check fails, user is not authenticated
       setUser(null);
+      setError(error.response?.data?.message || "Authentication check failed");
+      console.error("Auth check error:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to refetch user data
+  const refetchUser = async () => {
+    await checkAuth();
+  };
+
+  // Function to update user data locally
+  const updateUser = (userData: Partial<User>) => {
+    setUser((prevUser) => (prevUser ? { ...prevUser, ...userData } : null));
   };
 
   const login = async (email: string, password: string) => {
@@ -134,6 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
     } finally {
       setUser(null);
+      setError(null);
       router.push("/login");
     }
   };
@@ -143,10 +163,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         loading,
+        error,
         login,
         signup,
         logout,
         setUser,
+        refetchUser,
+        updateUser,
       }}
     >
       {children}

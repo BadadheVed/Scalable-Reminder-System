@@ -1,6 +1,6 @@
 import { db } from "@/db/route";
 import bcrypt from "bcrypt";
-import { generateToken } from "@/tokens/token";
+import { generateToken, verifyToken } from "@/tokens/token";
 import type { Request, Response, RequestHandler } from "express";
 
 // Define interfaces for better type safety
@@ -198,5 +198,32 @@ export const logout: RequestHandler = async (req: Request, res: Response) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+export const User = async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies?.token;
+    const decoded = verifyToken(token);
+    const user = await db.user.findFirst({
+      where: {
+        id: decoded.id,
+      },
+    });
+
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    return res.json({
+      success: true,
+      message: "User fetched successfully",
+      user: { id: user.id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
