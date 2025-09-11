@@ -18,22 +18,24 @@ model User {
   name      String
   email     String     @unique
   password  String
-  reminders Reminder[]
+  reminders Reminder[] @relation("UserReminders")
   otp       String?
   createdAt DateTime   @default(now())
 }
 
 model Reminder {
-  id    String @id @default(uuid())
-  title String
-
-  time      DateTime // HH:mm format 
+  id        String   @id @default(uuid())
+  title     String
+  description String?
+  time      DateTime // Full datetime, not just HH:mm format
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  status    Status?  @default(PENDING)
+  status    Status   @default(PENDING)
 
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation("UserReminders", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId]) // Add index for better query performance
 }
 
 enum Status {

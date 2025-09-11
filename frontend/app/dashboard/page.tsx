@@ -1,50 +1,96 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useStudyBlocks } from '@/hooks/useStudyBlocks';
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { TodaySchedule } from '@/components/dashboard/TodaySchedule';
-import { UpcomingBlocks } from '@/components/dashboard/UpcomingBlocks';
-import { StudyBlockForm } from '@/components/forms/StudyBlockForm';
-import { StudyStats } from '@/components/dashboard/StudyStats';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus } from 'lucide-react';
-import { StudyBlock } from '@/types';
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useReminders } from "@/hooks/useReminders";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { TodaySchedule } from "@/components/dashboard/TodaySchedule";
+import { UpcomingBlocks } from "@/components/dashboard/UpcomingBlocks";
+import { StudyBlockForm } from "@/components/forms/StudyBlockForm";
+import { ReminderStats } from "@/components/dashboard/StudyStats";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
+import { StudyBlock } from "@/types";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { studyBlocks, loading, createStudyBlock, updateStudyBlock, deleteStudyBlock } = useStudyBlocks();
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingBlock, setEditingBlock] = useState<StudyBlock | null>(null);
 
-  const handleCreateBlock = async (data: Omit<StudyBlock, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'status'>) => {
+  // Reminders hook (backend uses /reminder/create and /reminder/get)
+  const {
+    reminders,
+    loading: remindersLoading,
+    createReminder,
+    fetchReminders,
+  } = useReminders();
+
+  // Derive study blocks from reminders for display components
+  const studyBlocks: StudyBlock[] = reminders.map((r) => {
+    const startTime = new Date(r.time);
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // default 60m
+    const now = new Date();
+    let status: StudyBlock["status"] = "upcoming";
+    if (now >= startTime && now < endTime) status = "active";
+    else if (now >= endTime) status = "completed";
+
+    return {
+      id: r.id,
+      userId: r.userId,
+      title: r.title,
+      description: r.description,
+      startTime,
+      duration: 60,
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+      emailReminderSent: r.status === "SENT",
+      status,
+    };
+  });
+
+  const loading = remindersLoading;
+
+  // Handlers used by forms/components
+  const handleCreateBlock = async (
+    data: Omit<
+      StudyBlock,
+      "id" | "userId" | "createdAt" | "updatedAt" | "status"
+    >
+  ) => {
     try {
-      await createStudyBlock(data);
+      await createReminder({
+        title: data.title,
+        time: data.startTime,
+        description: data.description,
+      });
       setShowCreateForm(false);
-    } catch (error) {
-      console.error('Failed to create study block:', error);
+      fetchReminders();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to create reminder block");
     }
   };
 
-  const handleUpdateBlock = async (data: Omit<StudyBlock, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'status'>) => {
-    if (!editingBlock) return;
-    
-    try {
-      await updateStudyBlock(editingBlock.id, data);
-      setEditingBlock(null);
-    } catch (error) {
-      console.error('Failed to update study block:', error);
-    }
+  const handleUpdateBlock = async (
+    _data: Omit<
+      StudyBlock,
+      "id" | "userId" | "createdAt" | "updatedAt" | "status"
+    >
+  ) => {
+    toast.info("Updating study blocks is not supported yet");
+    setEditingBlock(null);
   };
 
-  const handleDeleteBlock = async (id: string) => {
-    try {
-      await deleteStudyBlock(id);
-    } catch (error) {
-      console.error('Failed to delete study block:', error);
-    }
+  const handleDeleteBlock = async (_id: string) => {
+    toast.info("Deleting study blocks is not supported yet");
   };
 
   return (
@@ -54,7 +100,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, {user?.name || 'Student'}! 👋
+              Welcome back, {user?.name || "Student"}! 👋
             </h1>
             <p className="text-muted-foreground mt-1">
               Ready to tackle your study sessions today?
@@ -65,12 +111,12 @@ export default function DashboardPage() {
             <DialogTrigger asChild>
               <Button size="lg" className="shadow-sm">
                 <Plus className="mr-2 h-5 w-5" />
-                Add Study Block
+                Add Reminder Block
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Create Study Block</DialogTitle>
+                <DialogTitle>Create Reminder Block</DialogTitle>
               </DialogHeader>
               <StudyBlockForm onSubmit={handleCreateBlock} />
             </DialogContent>
@@ -78,14 +124,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Section */}
-        <StudyStats studyBlocks={studyBlocks} />
+        <ReminderStats studyBlocks={studyBlocks} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Today's Schedule */}
           <div className="lg:col-span-2">
-            <TodaySchedule 
-              studyBlocks={studyBlocks} 
+            <TodaySchedule
+              studyBlocks={studyBlocks}
               loading={loading}
               onEdit={(block) => setEditingBlock(block)}
               onDelete={handleDeleteBlock}
@@ -94,8 +140,8 @@ export default function DashboardPage() {
 
           {/* Upcoming Blocks */}
           <div>
-            <UpcomingBlocks 
-              studyBlocks={studyBlocks} 
+            <UpcomingBlocks
+              studyBlocks={studyBlocks}
               loading={loading}
               onEdit={(block) => setEditingBlock(block)}
               onDelete={handleDeleteBlock}
@@ -104,15 +150,18 @@ export default function DashboardPage() {
         </div>
 
         {/* Edit Dialog */}
-        <Dialog open={!!editingBlock} onOpenChange={(open) => !open && setEditingBlock(null)}>
+        <Dialog
+          open={!!editingBlock}
+          onOpenChange={(open) => !open && setEditingBlock(null)}
+        >
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Edit Study Block</DialogTitle>
             </DialogHeader>
             {editingBlock && (
-              <StudyBlockForm 
+              <StudyBlockForm
                 initialData={editingBlock}
-                onSubmit={handleUpdateBlock} 
+                onSubmit={handleUpdateBlock}
               />
             )}
           </DialogContent>

@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { addReminder } from "@/queues/queue";
 export const CreateReminder = async (req: Request, res: Response) => {
   try {
-    const { title, time } = req.body;
+    const { title, time, description } = req.body;
     const user = (req as any).user; // from authMiddleware
 
     if (!title || !time) {
@@ -14,12 +14,15 @@ export const CreateReminder = async (req: Request, res: Response) => {
       });
     }
 
+    const createData: any = {
+      title,
+      description,
+      time: new Date(time),
+      userId: user.id,
+    };
+
     const reminder = await db.reminder.create({
-      data: {
-        title,
-        time: new Date(time),
-        userId: user.id,
-      },
+      data: createData,
     });
 
     const sendTime = new Date(time).getTime() - 10 * 60 * 1000;
@@ -53,7 +56,7 @@ export const GetReminder = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     if (!user) {
-      res.status(401).json({
+      return res.status(401).json({
         message: "Unauthorized",
       });
     }
