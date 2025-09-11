@@ -9,9 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -25,13 +24,13 @@ model User {
 }
 
 model Reminder {
-  id        String   @id @default(uuid())
-  title     String
+  id          String   @id @default(uuid())
+  title       String
   description String?
-  time      DateTime // Full datetime, not just HH:mm format
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  status    Status   @default(PENDING)
+  time        DateTime // Full datetime, not just HH:mm format
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  status      Status   @default(PENDING)
 
   userId String
   user   User   @relation("UserReminders", fields: [userId], references: [id], onDelete: Cascade)
