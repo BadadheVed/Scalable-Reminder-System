@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 import { verifyToken } from "@/tokens/token";
-export const authMiddleware = (req: Request, res: Response, next: Function) => {
+
+export const authMiddleware = (
+  req: Request,
+  res: Response,
+  next: Function
+) => {
   try {
     const token =
       req.cookies?.token || req.headers.authorization?.split(" ")[1];

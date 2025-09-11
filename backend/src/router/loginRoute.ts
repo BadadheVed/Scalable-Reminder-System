@@ -1,5 +1,5 @@
-import { login, SignUp, logout } from "@/controllers/login.controller";
-import { User } from "../controllers/login.controller";
+import { login, SignUp, logout, User } from "@/controllers/login.controller";
+
 import { Router } from "express";
 
 export const authRouter = Router();
