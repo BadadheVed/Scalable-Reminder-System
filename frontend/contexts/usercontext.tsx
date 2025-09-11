@@ -53,9 +53,16 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         setUser(null);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch user");
-      setUser(null);
-      console.error("Error fetching user:", err);
+      // Handle 401 (no token) gracefully - this is expected when user is not logged in
+      if (err.response?.status === 401) {
+        setUser(null);
+        setError(null); // Don't set error for 401, it's expected
+        console.log("User not authenticated (no token)");
+      } else {
+        setError(err.response?.data?.message || "Failed to fetch user");
+        setUser(null);
+        console.error("Error fetching user:", err);
+      }
     } finally {
       setLoading(false);
     }

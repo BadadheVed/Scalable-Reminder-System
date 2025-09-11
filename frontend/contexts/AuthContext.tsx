@@ -42,14 +42,14 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start as false since we don't check auth on mount
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Check if user is authenticated on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
+  // Don't check auth on mount - only after login
+  // useEffect(() => {
+  //   checkAuth();
+  // }, []);
 
   const checkAuth = async () => {
     try {
@@ -87,20 +87,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axiosInstance.post("/api/auth/login", {
+      const response = await axiosInstance.post("/auth/login", {
         email,
         password,
       });
 
       if (response.data.success) {
-        const userData: User = {
-          id: response.data.user?.id || "", // Adjust based on your backend response
-          email: email,
-          name: response.data.name,
-          token: response.data.token,
-        };
-
-        setUser(userData);
+        // After successful login, fetch user data from /auth/me
+        await checkAuth();
         toast.success("Login successful!");
 
         // Redirect after successful login
@@ -143,7 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async (): Promise<void> => {
     try {
-      await axiosInstance.post("/api/auth/logout");
+      await axiosInstance.post("/auth/logout");
       toast.success("Logged out successfully!");
     } catch (error) {
       // Even if logout fails on server, clear local state
