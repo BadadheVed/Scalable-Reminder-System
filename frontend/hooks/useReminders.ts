@@ -76,15 +76,15 @@ export const useReminders = (): UseRemindersReturn => {
         time: data.time.toISOString(),
         description: data.description,
       });
-      
+
       const res = await axiosInstance.post("/reminder/create", {
         title: data.title,
         time: data.time.toISOString(),
         description: data.description,
       });
-      
+
       console.log("Reminder creation response:", res.data);
-      
+
       const payload = res.data;
       if (payload?.success) {
         const newReminder = normalizeReminder(payload.reminder);

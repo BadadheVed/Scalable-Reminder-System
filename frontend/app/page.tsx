@@ -10,15 +10,15 @@ export default function HomePage() {
   const router = useRouter();
   const [showButton, setShowButton] = useState(false);
 
-  // useEffect(() => {
-  //   if (!loading) {
-  //     if (user) {
-  //       router.push("/dashboard");
-  //     } else {
-  //       router.push("/login");
-  //     }
-  //   }
-  // }, [user, loading, router]);
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        router.push("/dashboard");
+      } else {
+        router.push("/login");
+      }
+    }
+  }, [user, loading, router]);
 
   // Show the login button after 5 seconds to account for cold start
   useEffect(() => {
