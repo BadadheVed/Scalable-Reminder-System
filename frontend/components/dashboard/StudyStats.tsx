@@ -1,8 +1,8 @@
 "use client";
 
 import { StudyBlock } from "@/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Clock, Calendar, TrendingUp } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Bell, Calendar, TrendingUp } from "lucide-react";
 import { isToday, isThisWeek, isAfter } from "date-fns";
 
 interface StudyStatsProps {
@@ -59,16 +59,16 @@ export const ReminderStats = ({ studyBlocks }: StudyStatsProps) => {
       color: "text-green-600",
       bg: "bg-green-100",
     },
-    {
-      title: "Total Hours Planned",
-      value: formatHours(
-        studyBlocks.reduce((acc, block) => acc + block.duration, 0)
-      ),
-      description: `${studyBlocks.length} sessions`,
-      icon: Clock,
-      color: "text-purple-600",
-      bg: "bg-purple-100",
-    },
+    // {
+    //   title: "Total Hours Planned",
+    //   value: formatHours(
+    //     studyBlocks.reduce((acc, block) => acc + block.duration, 0)
+    //   ),
+    //   description: `${studyBlocks.length} sessions`,
+    //   icon: Clock,
+    //   color: "text-purple-600",
+    //   bg: "bg-purple-100",
+    // },
     {
       title: "Upcoming",
       value: upcomingBlocks.length.toString(),
