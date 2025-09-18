@@ -20,7 +20,7 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { logout, loading } = useAuth();
+  const { loading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState("");
   const [email, setEmail] = useState("");
@@ -51,9 +51,26 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      console.log("Redirecting to logout...");
+      const response = await axiosInstance.post("/auth/logout");
+
+      if (response.data.success) {
+        console.log("Logout successful:", response.data.message);
+        console.log("Redirecting to login page...");
+
+        // You might want to redirect to login page or clear local state
+        // For example:
+        // router.push("/login");
+        // or trigger a context method to clear user state
+
+        // Reload the page to clear any cached state
+        window.location.href = "/login"; // or wherever you want to redirect
+      }
     } catch (error) {
       console.error("Logout error:", error);
+      console.log("Logout failed, redirecting anyway...");
+      // Even if logout fails on backend, redirect to clear frontend state
+      window.location.href = "/login";
     }
   };
 
